@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parent Registration - Pocket Money Manager Pro</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="animated-bg"></div>
+    
+    <!-- Flash Messages -->
+    <div class="flash-messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        <span>{{ message }}</span>
+                        <button class="alert-close" onclick="this.parentElement.remove()">×</button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <div class="glass-panel auth-container">
+        <div class="auth-header">
+            <h2>Parent Registration</h2>
+            <p>Create a secure parental account to manage allowances and savings.</p>
+        </div>
+        
+        <form action="{{ url_for('register_parent') }}" method="POST" onsubmit="return validateForm()">
+            <div class="form-group">
+                <label for="username">Parent Username</label>
+                <input type="text" id="username" name="username" class="form-input" placeholder="Enter username" required autocomplete="off">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" class="form-input" placeholder="Create strong password" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="confirm_password">Confirm Password</label>
+                <input type="password" id="confirm_password" name="confirm_password" class="form-input" placeholder="Confirm your password" required>
+            </div>
+            
+            <button type="submit" class="btn-neon btn-neon-purple" style="width: 100%; margin-top: 10px;">
+                Register Parent Profile
+            </button>
+        </form>
+        
+        <div class="auth-footer">
+            Already have a parent account? <a href="{{ url_for('login_parent') }}">Log In here</a>
+            <br><br>
+            <a href="{{ url_for('welcome') }}" style="font-size: 0.85rem; color: rgba(255,255,255,0.4)">← Back to Welcome</a>
+        </div>
+    </div>
+
+    <script>
+        function validateForm() {
+            const pass = document.getElementById('password').value;
+            const confirm = document.getElementById('confirm_password').value;
+            if (pass !== confirm) {
+                alert("Passwords do not match!");
+                return false;
+            }
+            if (pass.length < 6) {
+                alert("Password should be at least 6 characters long.");
+                return false;
+            }
+            return true;
+        }
+    </script>
+</body>
+</html>
