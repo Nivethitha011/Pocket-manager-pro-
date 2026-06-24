@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome - Pocket Money Manager Pro</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="animated-bg"></div>
+    
+    <div class="welcome-container">
+        <h1 class="welcome-title">Pocket Money Manager Pro</h1>
+        <p class="welcome-subtitle">Smart money management, gamified savings, and AI financial guidance for families.</p>
+        
+        <div class="role-cards">
+            <!-- Parent Card -->
+            <div class="glass-panel role-card" id="card-parent" onclick="selectRole('parent')">
+                <div class="role-icon">👨</div>
+                <h3 class="role-name">Parent Profile</h3>
+                <p class="role-desc">Set allowance budgets, monitor transactions, view streaks, and manage child goals.</p>
+            </div>
+            
+            <!-- Child Card -->
+            <div class="glass-panel role-card" id="card-child" onclick="selectRole('child')">
+                <div class="role-icon">🧒</div>
+                <h3 class="role-name">Child Profile</h3>
+                <p class="role-desc">Log expenses, achieve savings goals, track daily saving streaks, earn badges, and chat with PocketAI.</p>
+            </div>
+        </div>
+        
+        <button id="continue-btn" class="btn-neon btn-neon-purple" disabled onclick="navigateRole()">
+            Continue <span style="font-size: 1.1rem;">→</span>
+        </button>
+    </div>
+
+    <script>
+        let selectedRole = '';
+
+        function selectRole(role) {
+            selectedRole = role;
+            
+            // Remove selected class from all cards
+            document.querySelectorAll('.role-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Add selected class to chosen card
+            if (role === 'parent') {
+                document.getElementById('card-parent').classList.add('selected');
+            } else if (role === 'child') {
+                document.getElementById('card-child').classList.add('selected');
+            }
+            
+            // Enable button
+            const btn = document.getElementById('continue-btn');
+            btn.removeAttribute('disabled');
+            btn.classList.remove('btn-neon-purple');
+            btn.classList.add('btn-neon-pink');
+        }
+
+        function navigateRole() {
+            if (selectedRole === 'parent') {
+                window.location.href = "{{ url_for('login_parent') }}";
+            } else if (selectedRole === 'child') {
+                window.location.href = "{{ url_for('login_child') }}";
+            }
+        }
+    </script>
+</body>
+</html>
