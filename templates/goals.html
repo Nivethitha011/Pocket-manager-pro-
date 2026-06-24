@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Savings Goals - Pocket Money Manager Pro</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="animated-bg"></div>
+    
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-brand">Pocket Money Manager Pro</div>
+        <div class="nav-links">
+            <a href="{{ url_for('child_dashboard') }}" class="nav-link">🧒 Dashboard</a>
+            <a href="{{ url_for('child_goals') }}" class="nav-link active">🎯 Goals</a>
+            <a href="{{ url_for('child_transactions') }}" class="nav-link">📜 Transactions</a>
+            <a href="{{ url_for('child_analytics') }}" class="nav-link">📊 Analytics</a>
+            <a href="{{ url_for('ai_assistant') }}" class="nav-link">🤖 PocketAI</a>
+            <a href="{{ url_for('logout') }}" class="nav-link">🚪 Logout</a>
+        </div>
+        <div class="nav-user">
+            <div class="user-avatar">C</div>
+            <span>{{ session['username'] }}</span>
+        </div>
+    </nav>
+    
+    <!-- Flash Messages -->
+    <div class="flash-messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        <span>{{ message }}</span>
+                        <button class="alert-close" onclick="this.parentElement.remove()">×</button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <div class="dashboard-wrapper">
+        
+        <!-- Header -->
+        <div class="glass-panel" style="padding: 20px 24px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h2 style="font-family: var(--font-heading);">🎯 Savings Goals</h2>
+                <p style="font-size: 0.85rem; color: rgba(255,255,255,0.5)">Put aside some allowance money to buy things you want!</p>
+            </div>
+            <button class="btn-neon btn-neon-cyan" onclick="openModal('add-goal-modal')">+ Create Savings Goal</button>
+        </div>
+        
+        <!-- Wallet remaining indicator -->
+        <div class="glass-panel" style="padding: 15px 24px; display: flex; align-items: center; justify-content: space-between;">
+            <span style="font-weight: 600; color: rgba(255,255,255,0.7)">Available Allowance Cash:</span>
+            <span style="font-size: 1.4rem; font-weight: 700; color: var(--neon-cyan)">₹{{ "%.2f"|format(wallet.remaining) }}</span>
+        </div>
+
+        <!-- Goals Cards Grid -->
+        <div class="goals-grid">
+            {% if goals %}
+                {% for g in goals %}
+                    <div class="glass-panel goal-card {% if g.status == 'completed' %}glass-panel-cyan{% endif %}">
+                        <div>
+                            <div class="goal-name-row">
+                                <h3 class="goal-title">{{ g.goal_name }}</h3>
+                                <span class="goal-status-badge {% if g.status == 'completed' %}status-completed{% else %}status-active{% endif %}">
+                                    {{ g.status }}
+                                </span>
+                            </div>
+                            
+                            <div class="goal-progress-numbers">
+                                <span>Saved: ₹{{ g.saved_amount }}</span>
+                                <span>Target: ₹{{ g.target_amount }}</span>
+                            </div>
+                            
+                            <div class="goal-progress-bar">
+                                <div class="goal-progress-fill {% if g.status == 'completed' %}fill-green{% else %}fill-cyan{% endif %}" style="width: {{ g.progress_percentage }}%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="goal-actions">
+                            {% if g.status == 'active' %}
+                                <button class="btn-neon btn-neon-purple" style="padding: 8px 16px; font-size: 0.8rem; flex-grow: 1;" onclick="openDepositModal('{{ g.id }}', '{{ g.goal_name }}')">🐷 Deposit</button>
+                            {% endif %}
+                            <button class="btn-neon btn-neon-outline" style="padding: 8px 14px; font-size: 0.8rem;" onclick="openEditModal('{{ g.id }}', '{{ g.goal_name }}', '{{ g.target_amount }}')">✏️ Edit</button>
+                            <form action="{{ url_for('delete_goal') }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this goal? Saved money will be returned to your remaining balance.');">
+                                <input type="hidden" name="goal_id" value="{{ g.id }}">
+                                <button type="submit" class="btn-neon btn-neon-outline" style="padding: 8px 14px; font-size: 0.8rem; border-color: rgba(255, 0, 127, 0.4); color: var(--neon-pink)">🗑️ Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="glass-panel" style="grid-column: 1 / -1; padding: 60px 20px; text-align: center;">
+                    <h3 style="color: rgba(255,255,255,0.7)">No Goals Set</h3>
+                    <p style="color: rgba(255,255,255,0.5); margin-top: 10px;">Create a savings goal using the button above and start saving pocket money today!</p>
+                </div>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <!-- MODAL 1: ADD GOAL -->
+    <div class="modal-overlay" id="add-goal-modal">
+        <div class="glass-panel modal-content">
+            <button class="modal-close-btn" onclick="closeModal('add-goal-modal')">×</button>
+            <h3 style="margin-bottom: 20px; font-family: var(--font-heading); color: var(--neon-cyan);">🎯 Set a Savings Goal</h3>
+            <form action="{{ url_for('add_goal') }}" method="POST">
+                <div class="form-group">
+                    <label for="goal_name">Goal Name</label>
+                    <input type="text" id="goal_name" name="goal_name" class="form-input" placeholder="e.g. Buy Bluetooth Headphones" required autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label for="target_amount">Target Amount (₹)</label>
+                    <input type="number" id="target_amount" name="target_amount" class="form-input" min="1" step="any" placeholder="e.g. 2000" required>
+                </div>
+                <button type="submit" class="btn-neon btn-neon-cyan" style="width: 100%; margin-top: 10px;">Set Saving Target</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: EDIT GOAL -->
+    <div class="modal-overlay" id="edit-goal-modal">
+        <div class="glass-panel modal-content">
+            <button class="modal-close-btn" onclick="closeModal('edit-goal-modal')">×</button>
+            <h3 style="margin-bottom: 20px; font-family: var(--font-heading); color: var(--neon-pink);">✏️ Edit Savings Goal</h3>
+            <form action="{{ url_for('edit_goal') }}" method="POST">
+                <input type="hidden" name="goal_id" id="edit-goal-id">
+                <div class="form-group">
+                    <label for="edit-goal-name">Goal Name</label>
+                    <input type="text" id="edit-goal-name" name="goal_name" class="form-input" required autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label for="edit-target-amount">Target Amount (₹)</label>
+                    <input type="number" id="edit-target-amount" name="target_amount" class="form-input" min="1" step="any" required>
+                </div>
+                <button type="submit" class="btn-neon btn-neon-pink" style="width: 100%; margin-top: 10px;">Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 3: DEPOSIT FOR GOAL -->
+    <div class="modal-overlay" id="deposit-goal-modal">
+        <div class="glass-panel modal-content">
+            <button class="modal-close-btn" onclick="closeModal('deposit-goal-modal')">×</button>
+            <h3 style="margin-bottom: 20px; font-family: var(--font-heading); color: var(--neon-green);" id="deposit-modal-title">🐷 Save for Goal</h3>
+            <form action="{{ url_for('save_for_goal') }}" method="POST">
+                <input type="hidden" name="goal_id" id="deposit-goal-id">
+                <div class="form-group">
+                    <label for="deposit-amount">Amount to Deposit (₹)</label>
+                    <input type="number" id="deposit-amount" name="amount" class="form-input" min="0.01" step="any" placeholder="Enter amount to move to savings" required>
+                </div>
+                <button type="submit" class="btn-neon btn-neon-purple" style="width: 100%; margin-top: 10px;">Transfer to Savings</button>
+            </form>
+        </div>
+    </div>
+
+    <footer>
+        Pocket Money Manager Pro - Designed for Financial Literacy
+    </footer>
+
+    <script>
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function openEditModal(id, name, target) {
+            document.getElementById('edit-goal-id').value = id;
+            document.getElementById('edit-goal-name').value = name;
+            document.getElementById('edit-target-amount').value = target;
+            openModal('edit-goal-modal');
+        }
+
+        function openDepositModal(id, name) {
+            document.getElementById('deposit-goal-id').value = id;
+            document.getElementById('deposit-modal-title').textContent = "🐷 Save for: " + name;
+            openModal('deposit-goal-modal');
+        }
+    </script>
+</body>
+</html>
