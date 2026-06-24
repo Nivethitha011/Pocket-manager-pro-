@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Child Login - Pocket Money Manager Pro</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="animated-bg"></div>
+    
+    <!-- Flash Messages -->
+    <div class="flash-messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        <span>{{ message }}</span>
+                        <button class="alert-close" onclick="this.parentElement.remove()">×</button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <div class="glass-panel auth-container">
+        <div class="auth-header">
+            <h2>Child Login</h2>
+            <p>Access your saver vault to track your goals, streaks, levels and chat with PocketAI.</p>
+        </div>
+        
+        <form action="{{ url_for('login_child') }}" method="POST">
+            <div class="form-group">
+                <label for="username">Child Username</label>
+                <input type="text" id="username" name="username" class="form-input" placeholder="Enter child username" required autocomplete="off">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" class="form-input" placeholder="Enter password" required>
+            </div>
+            
+            <button type="submit" class="btn-neon btn-neon-cyan" style="width: 100%; margin-top: 10px;">
+                Log In
+            </button>
+        </form>
+        
+        <div class="auth-footer">
+            Don't have an account? <a href="{{ url_for('register_child') }}">Register Saver Profile</a>
+            <br><br>
+            <a href="{{ url_for('welcome') }}" style="font-size: 0.85rem; color: rgba(255,255,255,0.4)">← Back to Welcome</a>
+        </div>
+    </div>
+</body>
+</html>
