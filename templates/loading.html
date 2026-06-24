@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pocket Money Manager Pro</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="loading-container">
+        <!-- 3D Rotating Coin -->
+        <div class="coin-3d">
+            <div class="coin-face coin-front">🪙</div>
+            <div class="coin-face coin-back">₹</div>
+        </div>
+        
+        <div class="loading-text">Loading Pocket Money Manager Pro...</div>
+        
+        <!-- Progress Bar Indicator -->
+        <div class="progress-bar-container">
+            <div class="progress-bar-fill"></div>
+        </div>
+    </div>
+
+    <script>
+        // Automatic redirect to welcome screen after progress animation completes
+        setTimeout(() => {
+            document.body.style.opacity = 0;
+            document.body.style.transition = 'opacity 0.6s ease';
+            setTimeout(() => {
+                window.location.href = "{{ url_for('welcome') }}";
+            }, 600);
+        }, 3400);
+    </script>
+</body>
+</html>
