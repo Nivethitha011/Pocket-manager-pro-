@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parent Login - Pocket Money Manager Pro</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="animated-bg"></div>
+    
+    <!-- Flash Messages -->
+    <div class="flash-messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        <span>{{ message }}</span>
+                        <button class="alert-close" onclick="this.parentElement.remove()">×</button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <div class="glass-panel auth-container">
+        <div class="auth-header">
+            <h2>Parent Login</h2>
+            <p>Access your dashboard to supervise allowances, savings and badges.</p>
+        </div>
+        
+        <form action="{{ url_for('login_parent') }}" method="POST">
+            <div class="form-group">
+                <label for="username">Parent Username</label>
+                <input type="text" id="username" name="username" class="form-input" placeholder="Enter username" required autocomplete="off">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" class="form-input" placeholder="Enter password" required>
+            </div>
+            
+            <button type="submit" class="btn-neon btn-neon-purple" style="width: 100%; margin-top: 10px;">
+                Log In
+            </button>
+        </form>
+        
+        <div class="auth-footer">
+            Don't have an account? <a href="{{ url_for('register_parent') }}">Register Parent Profile</a>
+            <br><br>
+            <a href="{{ url_for('welcome') }}" style="font-size: 0.85rem; color: rgba(255,255,255,0.4)">← Back to Welcome</a>
+        </div>
+    </div>
+</body>
+</html>
