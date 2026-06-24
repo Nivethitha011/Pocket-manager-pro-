@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parent Dashboard - Pocket Money Manager Pro</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="animated-bg"></div>
+    
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-brand">Pocket Money Manager Pro</div>
+        <div class="nav-links">
+            <span class="nav-link active">👨 Parent Control</span>
+            <a href="{{ url_for('logout') }}" class="nav-link">🚪 Logout</a>
+        </div>
+        <div class="nav-user">
+            <div class="user-avatar">P</div>
+            <span>{{ session['username'] }}</span>
+        </div>
+    </nav>
+    
+    <!-- Flash Messages -->
+    <div class="flash-messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        <span>{{ message }}</span>
+                        <button class="alert-close" onclick="this.parentElement.remove()">×</button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Dashboard Wrapper -->
+    <div class="dashboard-wrapper">
+        
+        <!-- Header & Switcher -->
+        <div class="glass-panel child-selector">
+            <div class="child-selector-label">Supervising Child:</div>
+            {% if children %}
+                <select class="child-select-dropdown" id="child-switcher" onchange="switchChild(this.value)">
+                    {% for ch in children %}
+                        <option value="{{ ch.id }}" {% if selected_child_id == ch.id %}selected{% endif %}>{{ ch.username }} (Lvl {{ ch.level }})</option>
+                    {% endfor %}
+                </select>
+            {% else %}
+                <span style="color: rgba(255,255,255,0.5)">No child profiles registered under your account yet. Let them register specifying your username.</span>
+            {% endif %}
+        </div>
+
+        <!-- Aggregate Parent Cards -->
+        <div class="metrics-grid">
+            <div class="glass-panel metric-card metric-card-purple">
+                <div class="metric-header">
+                    <span class="metric-title">💰 Total Allowance</span>
+                    <span class="metric-icon">💰</span>
+                </div>
+                <div class="metric-value">₹{{ "%.2f"|format(agg_allowance) }}</div>
+                <div class="metric-footer">Combined budget limit</div>
+            </div>
+            
+            <div class="glass-panel metric-card metric-card-pink">
+                <div class="metric-header">
+                    <span class="metric-title">📉 Total Spent</span>
+                    <span class="metric-icon">📉</span>
+                </div>
+                <div class="metric-value" style="color: var(--neon-pink)">₹{{ "%.2f"|format(agg_spent) }}</div>
+                <div class="metric-footer">Total child expenses</div>
+            </div>
+
+            <div class="glass-panel metric-card metric-card-cyan">
+                <div class="metric-header">
+                    <span class="metric-title">💵 Remaining Balance</span>
+                    <span class="metric-icon">💵</span>
+                </div>
+                <div class="metric-value" style="color: var(--neon-cyan)">₹{{ "%.2f"|format(agg_remaining) }}</div>
+                <div class="metric-footer">Leftover cash in wallets</div>
+            </div>
+
+            <div class="glass-panel metric-card metric-card-green">
+                <div class="metric-header">
+                    <span class="metric-title">🐷 Child Savings</span>
+                    <span class="metric-icon">🐷</span>
+                </div>
+                <div class="metric-value" style="color: var(--neon-green)">₹{{ "%.2f"|format(agg_savings) }}</div>
+                <div class="metric-footer">Money saved in goals</div>
+            </div>
+
+            <div class="glass-panel metric-card metric-card-orange">
+                <div class="metric-header">
+                    <span class="metric-title">🏆 Achievements Earned</span>
+                    <span class="metric-icon">🏆</span>
+                </div>
+                <div class="metric-value" style="color: var(--neon-orange)">{{ agg_badges }}</div>
+                <div class="metric-footer">Badges unlocked by kids</div>
+            </div>
+        </div>
+
+        <!-- Child Specific Section -->
+        {% if selected_child_info %}
+        <div class="dashboard-grid">
+            
+            <!-- Left Panel: Child Supervision details -->
+            <div style="display: flex; flex-direction: column; gap: 30px;">
+                
+                <!-- Quick Actions Panel -->
+                <div class="glass-panel" style="padding: 24px;">
+                    <div class="panel-header">
+                        <h3 class="panel-title">🛠️ Actions: {{ selected_child_info.username }}</h3>
+                    </div>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                        <button class="btn-neon btn-neon-purple" onclick="openModal('add-money-modal')">💰 Add Pocket Money</button>
+                        <button class="btn-neon btn-neon-pink" onclick="openModal('edit-allowance-modal')">✏️ Edit Allowance</button>
+                        <a href="{{ url_for('parent_export', child_id=selected_child_id) }}" class="btn-neon btn-neon-cyan">📥 Export CSV Report</a>
+                    </div>
+                </div>
+
+                <!-- Goals Progress -->
+                <div class="glass-panel" style="padding: 24px;">
+                    <div class="panel-header">
+                        <h3 class="panel-title">🎯 Savings Goals ({{ selected_child_info.username }})</h3>
+                    </div>
+                    {% if goals %}
+                        <div style="display: flex; flex-direction: column; gap: 15px;">
+                            {% for g in goals %}
+                                <div>
+                                    <div class="goal-progress-numbers">
+                                        <span>{{ g.goal_name }}</span>
+                                        <span>₹{{ g.saved_amount }} / ₹{{ g.target_amount }}</span>
+                                    </div>
+                                    <div class="goal-progress-bar">
+                                        <div class="goal-progress-fill {% if g.status == 'completed' %}fill-green{% else %}fill-cyan{% endif %}" style="width: {{ g.progress_percentage }}%"></div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p style="color: rgba(255,255,255,0.5)">No savings goals set by {{ selected_child_info.username }} yet.</p>
+                    {% endif %}
+                </div>
+
+                <!-- Transaction Logs -->
+                <div class="glass-panel" style="padding: 24px;">
+                    <div class="panel-header">
+                        <h3 class="panel-title">📜 Spending History</h3>
+                    </div>
+                    {% if transactions %}
+                        <div class="table-container">
+                            <table class="tx-table">
+                                <thead>
+                                    <tr>
+                                        <th>Category</th>
+                                        <th>Description</th>
+                                        <th>Amount</th>
+                                        <th>Date & Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for tx in transactions %}
+                                        <tr>
+                                            <td>
+                                                <span class="category-badge 
+                                                    {% if tx.category == 'Food' %}cat-food
+                                                    {% elif tx.category == 'Books' %}cat-books
+                                                    {% elif tx.category == 'Travel' %}cat-travel
+                                                    {% elif tx.category == 'Entertainment' %}cat-entertainment
+                                                    {% elif tx.category == 'Shopping' %}cat-shopping
+                                                    {% elif tx.category == 'Allowance' %}cat-allowance
+                                                    {% elif tx.category == 'Savings' %}cat-savings
+                                                    {% else %}cat-others{% endif %}">
+                                                    {{ tx.category }}
+                                                </span>
+                                            </td>
+                                            <td>{{ tx.description }}</td>
+                                            <td>
+                                                <span class="{% if tx.category == 'Allowance' %}tx-amount-pos{% else %}tx-amount-neg{% endif %}">
+                                                    {% if tx.category == 'Allowance' %}+{% else %}-{% endif %}₹{{ tx.amount }}
+                                                </span>
+                                            </td>
+                                            <td>{{ tx.date }} ({{ tx.time }})</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p style="color: rgba(255,255,255,0.5)">No spending logged by {{ selected_child_info.username }} yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Right Panel: Badges, Streaks and Notifications -->
+            <div style="display: flex; flex-direction: column; gap: 30px;">
+                
+                <!-- Streak & Gamification -->
+                <div class="glass-panel" style="padding: 24px;">
+                    <div class="panel-header">
+                        <h3 class="panel-title">🔥 Saving Streak</h3>
+                    </div>
+                    <div class="streak-display">
+                        <div class="streak-icon-animated">🔥</div>
+                        <div class="streak-info-text">
+                            <h4>{{ streak.streak_days if streak else 0 }} Day Streak</h4>
+                            <p style="font-size: 0.8rem; color: rgba(255,255,255,0.5)">Consecutive savings days</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Badges earned -->
+                <div class="glass-panel" style="padding: 24px;">
+                    <div class="panel-header">
+                        <h3 class="panel-title">🏆 Badges Earned</h3>
+                    </div>
+                    <div class="badges-container">
+                        {% set badge_list = ['💰 Smart Saver', '🏆 Gold Saver', '🎯 Goal Achiever', '🔥 Consistent Saver', '💎 Money Master', '👑 Finance Champion'] %}
+                        {% set earned_names = badges | map(attribute='badge_name') | list %}
+                        
+                        {% for b_name in badge_list %}
+                            {% set is_earned = b_name in earned_names %}
+                            <div class="badge-item {% if is_earned %}unlocked{% endif %}">
+                                <div class="badge-icon">{{ b_name.split(' ')[0] }}</div>
+                                <div class="badge-name">{{ b_name.split(' ')[1:] | join(' ') }}</div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Parent Notifications Panel -->
+                <div class="glass-panel" style="padding: 24px;">
+                    <div class="panel-header">
+                        <h3 class="panel-title">🔔 Parent Alerts</h3>
+                        <button class="btn-neon btn-neon-outline" style="font-size: 0.75rem; padding: 6px 12px;" onclick="clearNotifications()">Clear All</button>
+                    </div>
+                    <div class="notifications-list" id="notifications-panel">
+                        {% if notifications %}
+                            {% for notif in notifications %}
+                                <div class="notification-item {% if notif.status == 'unread' %}unread{% endif %}">
+                                    {{ notif.message }}
+                                    <span class="notification-time">{{ notif.created_at }}</span>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <p style="color: rgba(255,255,255,0.5); text-align: center; padding: 20px 0;">No new alerts.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+        {% else %}
+            <div class="glass-panel" style="padding: 60px; text-align: center;">
+                <h2>Register a Child to Get Started</h2>
+                <p style="color: rgba(255,255,255,0.6); margin-top: 15px;">To supervise wallets, please ask your children to sign up and input your parent username: <strong>{{ session['username'] }}</strong></p>
+            </div>
+        {% endif %}
+
+    </div>
+
+    <!-- MODAL 1: ADD POCKET MONEY -->
+    <div class="modal-overlay" id="add-money-modal">
+        <div class="glass-panel modal-content">
+            <button class="modal-close-btn" onclick="closeModal('add-money-modal')">×</button>
+            <h3 style="margin-bottom: 20px; font-family: var(--font-heading);">💰 Load Allowance</h3>
+            <form action="{{ url_for('parent_add_money') }}" method="POST">
+                <input type="hidden" name="child_id" value="{{ selected_child_id }}">
+                <div class="form-group">
+                    <label for="amount">Amount (₹)</label>
+                    <input type="number" id="amount" name="amount" class="form-input" min="1" step="any" placeholder="Enter amount to add" required>
+                </div>
+                <button type="submit" class="btn-neon btn-neon-purple" style="width: 100%; margin-top: 10px;">Deposit Pocket Money</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: EDIT ALLOWANCE -->
+    <div class="modal-overlay" id="edit-allowance-modal">
+        <div class="glass-panel modal-content">
+            <button class="modal-close-btn" onclick="closeModal('edit-allowance-modal')">×</button>
+            <h3 style="margin-bottom: 20px; font-family: var(--font-heading);">✏️ Adjust Monthly Allowance</h3>
+            <form action="{{ url_for('parent_edit_allowance') }}" method="POST">
+                <input type="hidden" name="child_id" value="{{ selected_child_id }}">
+                <div class="form-group">
+                    <label for="allowance">Baseline Allowance (₹)</label>
+                    <input type="number" id="allowance" name="allowance" class="form-input" min="0" step="any" placeholder="Enter new allowance baseline" required>
+                </div>
+                <button type="submit" class="btn-neon btn-neon-pink" style="width: 100%; margin-top: 10px;">Set Allowance</button>
+            </form>
+        </div>
+    </div>
+
+    <footer>
+        Pocket Money Manager Pro - Designed for Financial Literacy
+    </footer>
+
+    <script>
+        function switchChild(childId) {
+            window.location.href = "{{ url_for('parent_dashboard') }}?child_id=" + childId;
+        }
+
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function clearNotifications() {
+            fetch("{{ url_for('api_notifications_read') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const items = document.querySelectorAll('.notification-item');
+                    items.forEach(it => {
+                        it.classList.remove('unread');
+                        it.style.borderLeftColor = 'var(--neon-purple)';
+                    });
+                    location.reload(); // Quick refresh to update the lists
+                }
+            });
+        }
+    </script>
+</body>
+</html>
