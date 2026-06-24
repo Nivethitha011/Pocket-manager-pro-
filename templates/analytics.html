@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Analytics - Pocket Money Manager Pro</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Load Chart.js from official CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="animated-bg"></div>
+    
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-brand">Pocket Money Manager Pro</div>
+        <div class="nav-links">
+            <a href="{{ url_for('child_dashboard') }}" class="nav-link">🧒 Dashboard</a>
+            <a href="{{ url_for('child_goals') }}" class="nav-link">🎯 Goals</a>
+            <a href="{{ url_for('child_transactions') }}" class="nav-link">📜 Transactions</a>
+            <a href="{{ url_for('child_analytics') }}" class="nav-link active">📊 Analytics</a>
+            <a href="{{ url_for('ai_assistant') }}" class="nav-link">🤖 PocketAI</a>
+            <a href="{{ url_for('logout') }}" class="nav-link">🚪 Logout</a>
+        </div>
+        <div class="nav-user">
+            <div class="user-avatar">C</div>
+            <span>{{ session['username'] }}</span>
+        </div>
+    </nav>
+
+    <div class="dashboard-wrapper">
+        
+        <!-- Header -->
+        <div class="glass-panel" style="padding: 20px 24px;">
+            <h2 style="font-family: var(--font-heading); margin-bottom: 5px;">📊 Financial Analytics Dashboard</h2>
+            <p style="font-size: 0.85rem; color: rgba(255,255,255,0.5)">Detailed visual charts outlining spending habits, savings rate and gamified progression.</p>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="charts-grid">
+            
+            <!-- Pie Chart: Category Spending -->
+            <div class="glass-panel chart-card">
+                <h4 style="margin-bottom: 15px; font-family: var(--font-heading); color: var(--neon-pink)">🍕 Spending by Category</h4>
+                <div style="height: calc(100% - 40px); display: flex; justify-content: center; align-items: center;">
+                    <canvas id="categoryPieChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Bar Chart: Monthly Spending -->
+            <div class="glass-panel chart-card">
+                <h4 style="margin-bottom: 15px; font-family: var(--font-heading); color: var(--neon-purple)">📅 Monthly Expenditure trends</h4>
+                <div style="height: calc(100% - 40px); display: flex; justify-content: center; align-items: center;">
+                    <canvas id="monthlySpendingBarChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Line Chart: Savings Growth -->
+            <div class="glass-panel chart-card">
+                <h4 style="margin-bottom: 15px; font-family: var(--font-heading); color: var(--neon-cyan)">📈 Cumulative Savings Growth</h4>
+                <div style="height: calc(100% - 40px); display: flex; justify-content: center; align-items: center;">
+                    <canvas id="savingsGrowthLineChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Goal Targets Comparison Chart -->
+            <div class="glass-panel chart-card">
+                <h4 style="margin-bottom: 15px; font-family: var(--font-heading); color: var(--neon-green)">🎯 Goals Target vs Saved</h4>
+                <div style="height: calc(100% - 40px); display: flex; justify-content: center; align-items: center;">
+                    <canvas id="goalsComparisonChart"></canvas>
+                </div>
+            </div>
+            
+        </div>
+
+        <!-- Quick Summary cards -->
+        <div class="glass-panel" style="padding: 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+            <div>
+                <h4 style="color: rgba(255,255,255,0.4); font-size: 0.8rem; text-transform: uppercase;">🔥 Savings Streak</h4>
+                <p id="summary-streak" style="font-size: 1.8rem; font-weight: 700; color: var(--neon-orange); margin-top: 5px;">0 Days</p>
+            </div>
+            <div>
+                <h4 style="color: rgba(255,255,255,0.4); font-size: 0.8rem; text-transform: uppercase;">⭐ Gamified XP Level</h4>
+                <p id="summary-xp" style="font-size: 1.8rem; font-weight: 700; color: var(--neon-cyan); margin-top: 5px;">Level 1 (0 XP)</p>
+            </div>
+            <div>
+                <h4 style="color: rgba(255,255,255,0.4); font-size: 0.8rem; text-transform: uppercase;">💡 Advisor Status</h4>
+                <p style="font-size: 0.95rem; color: rgba(255,255,255,0.7); margin-top: 5px; line-height: 1.4;">PocketAI analysis is available! Visit the chat screen to query spending forecasts.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <footer>
+        Pocket Money Manager Pro - Designed for Financial Literacy
+    </footer>
+
+    <!-- Load the customized Javascript analytics script -->
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script>
+        // Trigger Chart initialization on load
+        document.addEventListener("DOMContentLoaded", () => {
+            if (typeof initAnalyticsCharts === "function") {
+                initAnalyticsCharts("{{ child_id }}");
+            }
+        });
+    </script>
+</body>
+</html>
