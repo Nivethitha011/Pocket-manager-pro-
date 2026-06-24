@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction History - Pocket Money Manager Pro</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="animated-bg"></div>
+    
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-brand">Pocket Money Manager Pro</div>
+        <div class="nav-links">
+            <a href="{{ url_for('child_dashboard') }}" class="nav-link">🧒 Dashboard</a>
+            <a href="{{ url_for('child_goals') }}" class="nav-link">🎯 Goals</a>
+            <a href="{{ url_for('child_transactions') }}" class="nav-link active">📜 Transactions</a>
+            <a href="{{ url_for('child_analytics') }}" class="nav-link">📊 Analytics</a>
+            <a href="{{ url_for('ai_assistant') }}" class="nav-link">🤖 PocketAI</a>
+            <a href="{{ url_for('logout') }}" class="nav-link">🚪 Logout</a>
+        </div>
+        <div class="nav-user">
+            <div class="user-avatar">C</div>
+            <span>{{ session['username'] }}</span>
+        </div>
+    </nav>
+    
+    <!-- Flash Messages -->
+    <div class="flash-messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        <span>{{ message }}</span>
+                        <button class="alert-close" onclick="this.parentElement.remove()">×</button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <div class="dashboard-wrapper">
+        
+        <!-- Header -->
+        <div class="glass-panel" style="padding: 20px 24px;">
+            <h2 style="font-family: var(--font-heading); margin-bottom: 5px;">📜 Transaction Ledger</h2>
+            <p style="font-size: 0.85rem; color: rgba(255,255,255,0.5)">Complete history of expenditures, pocket money deposits and goal savings.</p>
+        </div>
+
+        <!-- Filters Form -->
+        <form action="{{ url_for('child_transactions') }}" method="GET" class="glass-panel search-filter-row" style="padding: 20px 24px; display: flex; gap: 15px; align-items: center;">
+            <div class="search-input-wrapper">
+                <input type="text" name="search" class="form-input" placeholder="🔍 Search description..." value="{{ search }}" autocomplete="off">
+            </div>
+            
+            <div style="min-width: 180px;">
+                <select name="category" class="form-input form-select" onchange="this.form.submit()">
+                    <option value="">All Categories</option>
+                    <option value="Food" {% if category == 'Food' %}selected{% endif %}>🍔 Food</option>
+                    <option value="Books" {% if category == 'Books' %}selected{% endif %}>📚 Books</option>
+                    <option value="Travel" {% if category == 'Travel' %}selected{% endif %}>🚌 Travel</option>
+                    <option value="Entertainment" {% if category == 'Entertainment' %}selected{% endif %}>🎮 Entertainment</option>
+                    <option value="Shopping" {% if category == 'Shopping' %}selected{% endif %}>🛍 Shopping</option>
+                    <option value="Savings" {% if category == 'Savings' %}selected{% endif %}>🐷 Savings</option>
+                    <option value="Allowance" {% if category == 'Allowance' %}selected{% endif %}>💰 Allowance</option>
+                    <option value="Others" {% if category == 'Others' %}selected{% endif %}>📦 Others</option>
+                </select>
+            </div>
+            
+            <button type="submit" class="btn-neon btn-neon-cyan" style="padding: 10px 24px;">Apply</button>
+            <a href="{{ url_for('child_transactions') }}" class="btn-neon btn-neon-outline" style="padding: 10px 20px;">Reset</a>
+        </form>
+
+        <!-- Transaction Table -->
+        <div class="glass-panel" style="padding: 24px;">
+            {% if transactions %}
+                <div class="table-container">
+                    <table class="tx-table">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Description</th>
+                                <th>Amount</th>
+                                <th>Date</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tx in transactions %}
+                                <tr>
+                                    <td>
+                                        <span class="category-badge 
+                                            {% if tx.category == 'Food' %}cat-food
+                                            {% elif tx.category == 'Books' %}cat-books
+                                            {% elif tx.category == 'Travel' %}cat-travel
+                                            {% elif tx.category == 'Entertainment' %}cat-entertainment
+                                            {% elif tx.category == 'Shopping' %}cat-shopping
+                                            {% elif tx.category == 'Allowance' %}cat-allowance
+                                            {% elif tx.category == 'Savings' %}cat-savings
+                                            {% else %}cat-others{% endif %}">
+                                            {{ tx.category }}
+                                        </span>
+                                    </td>
+                                    <td>{{ tx.description }}</td>
+                                    <td>
+                                        <span class="{% if tx.category == 'Allowance' %}tx-amount-pos{% else %}tx-amount-neg{% endif %}">
+                                            {% if tx.category == 'Allowance' %}+{% else %}-{% endif %}₹{{ "%.2f"|format(tx.amount) }}
+                                        </span>
+                                    </td>
+                                    <td>{{ tx.date }}</td>
+                                    <td>{{ tx.time }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div style="text-align: center; padding: 40px 0; color: rgba(255,255,255,0.5)">
+                    No transactions match your search criteria.
+                </div>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <footer>
+        Pocket Money Manager Pro - Designed for Financial Literacy
+    </footer>
+</body>
+</html>
