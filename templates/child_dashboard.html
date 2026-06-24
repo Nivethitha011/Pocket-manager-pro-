@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Child Dashboard - Pocket Money Manager Pro</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="animated-bg"></div>
+    
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-brand">Pocket Money Manager Pro</div>
+        <div class="nav-links">
+            <a href="{{ url_for('child_dashboard') }}" class="nav-link active">🧒 Dashboard</a>
+            <a href="{{ url_for('child_goals') }}" class="nav-link">🎯 Goals</a>
+            <a href="{{ url_for('child_transactions') }}" class="nav-link">📜 Transactions</a>
+            <a href="{{ url_for('child_analytics') }}" class="nav-link">📊 Analytics</a>
+            <a href="{{ url_for('ai_assistant') }}" class="nav-link">🤖 PocketAI</a>
+            <a href="{{ url_for('logout') }}" class="nav-link">🚪 Logout</a>
+        </div>
+        <div class="nav-user">
+            <div class="user-avatar">C</div>
+            <span>{{ child_info.username }}</span>
+        </div>
+    </nav>
+    
+    <!-- Flash Messages -->
+    <div class="flash-messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        <span>{{ message }}</span>
+                        <button class="alert-close" onclick="this.parentElement.remove()">×</button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Dashboard Wrapper -->
+    <div class="dashboard-wrapper">
+        
+        <!-- Gamification Level & XP Bar -->
+        <div class="glass-panel xp-level-container">
+            <div class="xp-header">
+                <span class="xp-level-title">⭐ Level {{ child_info.level }}: {{ level_title }}</span>
+                <span class="xp-score">{{ child_info.xp }} XP</span>
+            </div>
+            <div class="xp-bar-track">
+                <div class="xp-bar-fill" id="xp-bar-fill" style="width: {{ xp_percentage }}%"></div>
+            </div>
+            <div style="font-size: 0.8rem; color: rgba(255,255,255,0.4); margin-top: 6px; text-align: right;">
+                Next Level at {{ max_xp }} XP
+            </div>
+        </div>
+
+        <!-- Metric Cards Grid -->
+        <div class="metrics-grid">
+            <div class="glass-panel metric-card metric-card-purple">
+                <div class="metric-header">
+                    <span class="metric-title">💰 Total Allowance</span>
+                    <span class="metric-icon">💰</span>
+                </div>
+                <div class="metric-value">₹{{ "%.2f"|format(wallet.allowance) }}</div>
+                <div class="metric-footer">Current baseline limit</div>
+            </div>
+            
+            <div class="glass-panel metric-card metric-card-pink">
+                <div class="metric-header">
+                    <span class="metric-title">📉 Amount Spent</span>
+                    <span class="metric-icon">📉</span>
+                </div>
+                <div class="metric-value" style="color: var(--neon-pink)">₹{{ "%.2f"|format(wallet.spent) }}</div>
+                <div class="metric-footer">Total shopping & food logs</div>
+            </div>
+
+            <div class="glass-panel metric-card metric-card-cyan">
+                <div class="metric-header">
+                    <span class="metric-title">💵 Remaining Cash</span>
+                    <span class="metric-icon">💵</span>
+                </div>
+                <div class="metric-value" style="color: var(--neon-cyan)">₹{{ "%.2f"|format(wallet.remaining) }}</div>
+                <div class="metric-footer">Available allowance balance</div>
+            </div>
+
+            <div class="glass-panel metric-card metric-card-orange">
+                <div class="metric-header">
+                    <span class="metric-title">🔥 Savings Streak</span>
+                    <span class="metric-icon">🔥</span>
+                </div>
+                <div class="metric-value" style="color: var(--neon-orange)">{{ streak.streak_days if streak else 0 }} Days</div>
+                <div class="metric-footer">Keep saving for consecutive days!</div>
+            </div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="dashboard-grid">
+            
+            <!-- Left Side: Spend Money Form and Recent Logs -->
+            <div style="display: flex; flex-direction: column; gap: 30px;">
+                
+                <!-- Log Expenditure Form -->
+                <div class="glass-panel" style="padding: 24px;">
+                    <div class="panel-header">
+                        <h3 class="panel-title">🛍️ Spend Allowance</h3>
+                    </div>
+                    <form action="{{ url_for('child_spend') }}" method="POST">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div class="form-group">
+                                <label for="amount">Amount (₹)</label>
+                                <input type="number" id="amount" name="amount" class="form-input" min="0.01" step="any" placeholder="How much?" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="category">Category</label>
+                                <select id="category" name="category" class="form-input form-select" required>
+                                    <option value="" disabled selected>Select category</option>
+                                    <option value="Food">🍔 Food</option>
+                                    <option value="Books">📚 Books</option>
+                                    <option value="Travel">🚌 Travel</option>
+                                    <option value="Entertainment">🎮 Entertainment</option>
+                                    <option value="Shopping">🛍 Shopping</option>
+                                    <option value="Others">📦 Others</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="description">Description</label>
+                            <input type="text" id="description" name="description" class="form-input" placeholder="e.g. Bought lunch at school cafeteria" required autocomplete="off">
+                        </div>
+                        
+                        <button type="submit" class="btn-neon btn-neon-pink" style="width: 100%; margin-top: 10px;">
+                            Deduct & Log Expense
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Recent Transactions Log -->
+                <div class="glass-panel" style="padding: 24px;">
+                    <div class="panel-header">
+                        <h3 class="panel-title">📜 Recent Logged Entries</h3>
+                        <a href="{{ url_for('child_transactions') }}" class="btn-neon btn-neon-outline" style="font-size: 0.75rem; padding: 6px 12px;">View All</a>
+                    </div>
+                    {% if recent_transactions %}
+                        <div class="table-container">
+                            <table class="tx-table">
+                                <thead>
+                                    <tr>
+                                        <th>Category</th>
+                                        <th>Description</th>
+                                        <th>Amount</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for tx in recent_transactions %}
+                                        <tr>
+                                            <td>
+                                                <span class="category-badge 
+                                                    {% if tx.category == 'Food' %}cat-food
+                                                    {% elif tx.category == 'Books' %}cat-books
+                                                    {% elif tx.category == 'Travel' %}cat-travel
+                                                    {% elif tx.category == 'Entertainment' %}cat-entertainment
+                                                    {% elif tx.category == 'Shopping' %}cat-shopping
+                                                    {% elif tx.category == 'Allowance' %}cat-allowance
+                                                    {% elif tx.category == 'Savings' %}cat-savings
+                                                    {% else %}cat-others{% endif %}">
+                                                    {{ tx.category }}
+                                                </span>
+                                            </td>
+                                            <td>{{ tx.description }}</td>
+                                            <td>
+                                                <span class="{% if tx.category == 'Allowance' %}tx-amount-pos{% else %}tx-amount-neg{% endif %}">
+                                                    {% if tx.category == 'Allowance' %}+{% else %}-{% endif %}₹{{ tx.amount }}
+                                                </span>
+                                            </td>
+                                            <td>{{ tx.date }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p style="color: rgba(255,255,255,0.5)">No entries logged. Add some spending or receive pocket money!</p>
+                    {% endif %}
+                </div>
+
+            </div>
+
+            <!-- Right Side: Goals summary, Earned Badges and notifications -->
+            <div style="display: flex; flex-direction: column; gap: 30px;">
+                
+                <!-- Goals Progress -->
+                <div class="glass-panel" style="padding: 24px;">
+                    <div class="panel-header">
+                        <h3 class="panel-title">🎯 active Goals</h3>
+                        <a href="{{ url_for('child_goals') }}" class="btn-neon btn-neon-outline" style="font-size: 0.75rem; padding: 6px 12px;">Add Goal</a>
+                    </div>
+                    {% if goals %}
+                        <div style="display: flex; flex-direction: column; gap: 15px;">
+                            {% for g in goals %}
+                                <div>
+                                    <div class="goal-progress-numbers">
+                                        <span>{{ g.goal_name }}</span>
+                                        <span>₹{{ g.saved_amount }} / ₹{{ g.target_amount }}</span>
+                                    </div>
+                                    <div class="goal-progress-bar">
+                                        <div class="goal-progress-fill fill-cyan" style="width: {{ g.progress_percentage }}%"></div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p style="color: rgba(255,255,255,0.5)">No active savings goals. Create one to start saving!</p>
+                    {% endif %}
+                </div>
+
+                <!-- Achievements Badges -->
+                <div class="glass-panel" style="padding: 24px;">
+                    <div class="panel-header">
+                        <h3 class="panel-title">🏆 Badge Book</h3>
+                    </div>
+                    <div class="badges-container">
+                        {% set badge_list = ['💰 Smart Saver', '🏆 Gold Saver', '🎯 Goal Achiever', '🔥 Consistent Saver', '💎 Money Master', '👑 Finance Champion'] %}
+                        {% set earned_names = badges | map(attribute='badge_name') | list %}
+                        
+                        {% for b_name in badge_list %}
+                            {% set is_earned = b_name in earned_names %}
+                            <div class="badge-item {% if is_earned %}unlocked{% endif %}">
+                                <div class="badge-icon">{{ b_name.split(' ')[0] }}</div>
+                                <div class="badge-name">{{ b_name.split(' ')[1:] | join(' ') }}</div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Notifications Panel -->
+                <div class="glass-panel" style="padding: 24px;">
+                    <div class="panel-header">
+                        <h3 class="panel-title">🔔 Vault Alerts</h3>
+                        <button class="btn-neon btn-neon-outline" style="font-size: 0.75rem; padding: 6px 12px;" onclick="clearNotifications()">Clear All</button>
+                    </div>
+                    <div class="notifications-list" id="notifications-panel">
+                        {% if notifications %}
+                            {% for notif in notifications %}
+                                <div class="notification-item {% if notif.status == 'unread' %}unread{% endif %}">
+                                    {{ notif.message }}
+                                    <span class="notification-time">{{ notif.created_at }}</span>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <p style="color: rgba(255,255,255,0.5); text-align: center; padding: 20px 0;">No new alerts.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Badge Unlocked Toast Notification System -->
+    <div class="badge-popup-container" id="badge-popups"></div>
+
+    <footer>
+        Pocket Money Manager Pro - Designed for Financial Literacy
+    </footer>
+
+    <script>
+        function clearNotifications() {
+            fetch("{{ url_for('api_notifications_read') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                }
+            });
+        }
+    </script>
+</body>
+</html>
